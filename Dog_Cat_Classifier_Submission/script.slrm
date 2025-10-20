@@ -1,0 +1,45 @@
+#!/bin/bash
+
+#SBATCH --nodes=1
+#SBATCH --job-name=dog_cat
+#SBATCH --ntasks=1
+#SBATCH --time=1:00:00
+#SBATCH --partition=cpu
+
+echo "Inicializando modelo clasificador de perros y gatos"
+echo "Job ID: $SLURM_JOB_ID"
+echo "Hostname: $(hostname)"
+echo "------------------------------"
+
+# Descargamos las imagenes para entrenar el modelo
+wget 'https://storage.googleapis.com/mledu-datasets/cats_and_dogs_filtered.zip'
+
+# Extraemos los archivos descargados
+unzip cats_and_dogs_filtered.zip
+
+# Activar el ambiente
+# source activate dog_cat_classifier
+
+# Instalamos todas las librerias necesarias con su version correspondiente
+conda install -c conda-forge tensorflow==2.14
+conda install -c conda-forge matplotlib
+conda install -c conda-forge numpy
+conda install -c conda-forge scipy
+
+# Ejecutar el codigo de python para crear modelo
+python classifier.py
+
+# Checamos que archivos tenemos en la carpeta actual
+ls
+
+# Instalamos la libreria para convertir el modelo a tensorflow.js
+pip install tensorflowjs
+
+# Creamos la carpeta de salida
+mkdir carpeta_salida
+
+# Exportamos el modelo con un conversor a la carpeta de salida
+tensorflowjs_converter --input_format keras perros-gatos.h5 carpeta_salida
+
+# Guardamos los archivos en un zip para transferir a nuestra implementacion
+zip carpeta_salida/perros-gatos.zip carpeta_salida/*
